@@ -26,6 +26,7 @@ interface User {
   city?: string
   state?: string
   zip_code?: string
+  is_staff?: boolean 
   vendor_profile?: VendorProfile | null
 }
 
