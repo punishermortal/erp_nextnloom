@@ -8,7 +8,7 @@ import 'react-toastify/dist/ReactToastify.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'NextBloom - Fresh Groceries Delivered',
+  title: 'NexBloom - Fresh Groceries Delivered',
   description: 'Your one-stop shop for fresh groceries and organic products',
 }
 
