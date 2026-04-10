@@ -21,6 +21,8 @@ class OrderViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return Order.objects.none()
         # If user is admin, return all orders; otherwise return only user's orders
         if self.request.user.is_staff or getattr(self.request.user, 'role', None) == 'admin':
             return Order.objects.all().select_related('user').prefetch_related('items', 'items__product')

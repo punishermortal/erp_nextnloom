@@ -12,6 +12,8 @@ class CartViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return Cart.objects.none()
         return Cart.objects.filter(user=self.request.user)
 
     def list(self, request, *args, **kwargs):

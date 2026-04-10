@@ -13,8 +13,8 @@ SECRET_KEY = config('SECRET_KEY', default='django-insecure-change-in-production'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
-
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1,localhost', cast=lambda v: [s.strip() for s in v.split(',')])
+print("DEBUG VALUE:", DEBUG)
+ALLOWED_HOSTS = ["*"]#config('ALLOWED_HOSTS', default='localhost,127.0.0.1,localhost', cast=lambda v: [s.strip() for s in v.split(',')])
 
 # Application definition
 INSTALLED_APPS = [
@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     'products',
     'orders',
     'cart',
+    'drf_yasg'
 ]
 
 MIDDLEWARE = [

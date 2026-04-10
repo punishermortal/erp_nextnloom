@@ -78,6 +78,8 @@ class VendorProductViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsVendorUser]
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return Product.objects.none()
         return Product.objects.filter(vendor=self.request.user).order_by('-created_at')
 
     def perform_create(self, serializer):
