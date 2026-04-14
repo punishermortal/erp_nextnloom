@@ -68,7 +68,7 @@ export default function AdminCategoriesPage() {
       }
       setEditingId(null)
       setShowAddForm(false)
-      setFormData({ name: '', description: '', is_active: true })
+      setFormData({ name: '', slug: '', description: '', is_active: true })
       fetchCategories()
     } catch (error: any) {
       toast.error(error.response?.data?.detail || 'Failed to save category')
@@ -117,7 +117,7 @@ export default function AdminCategoriesPage() {
             onClick={() => {
               setShowAddForm(true)
               setEditingId(null)
-              setFormData({ name: '', description: '', is_active: true })
+              setFormData({ name: '', slug: '', description: '', is_active: true })
             }}
             className="px-5 py-3 rounded-full bg-emerald-600 text-white font-semibold hover:bg-emerald-700 transition"
           >
@@ -196,7 +196,7 @@ export default function AdminCategoriesPage() {
                 onClick={() => {
                   setShowAddForm(false)
                   setEditingId(null)
-                  setFormData({ name: '', description: '', is_active: true })
+                  setFormData({ name: '', slug: '', description: '', is_active: true })
                 }}
                 className="px-6 py-3 rounded-full border border-gray-200 text-gray-600 font-semibold hover:bg-gray-50 transition"
               >
