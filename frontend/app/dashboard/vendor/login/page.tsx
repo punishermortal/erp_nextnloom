@@ -7,6 +7,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { toast } from 'react-toastify'
 import { AppDispatch, RootState } from '@/store/store'
 import { login } from '@/store/slices/authSlice'
+import { getErrorMessage } from '@/lib/errorHandler'
 
 export default function VendorLoginPage() {
   const router = useRouter()
@@ -30,7 +31,7 @@ export default function VendorLoginPage() {
       toast.success('Welcome back, vendor!')
       router.push('/dashboard/vendor')
     } catch (error: any) {
-      toast.error(error.response?.data?.error || error.message || 'Vendor login failed')
+      toast.error(getErrorMessage(error))
     }
   }
 

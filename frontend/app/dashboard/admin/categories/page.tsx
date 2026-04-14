@@ -25,7 +25,7 @@ export default function AdminCategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [editingId, setEditingId] = useState<number | null>(null)
-  const [formData, setFormData] = useState({ name: '', description: '', is_active: true })
+  const [formData, setFormData] = useState({ name: '', slug: '', description: '', is_active: true })
   const [showAddForm, setShowAddForm] = useState(false)
 
   useEffect(() => {
@@ -78,8 +78,7 @@ export default function AdminCategoriesPage() {
   const handleEdit = (category: Category) => {
     setEditingId(category.id)
     setFormData({
-      name: category.name,
-      description: category.description || '',
+      name: category.name,      slug: category.slug,      description: category.description || '',
       is_active: category.is_active,
     })
     setShowAddForm(true)
@@ -161,6 +160,16 @@ export default function AdminCategoriesPage() {
                 rows={3}
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Slug</label>
+              <input
+                type="text"
+                value={formData.slug}
+                onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                placeholder="Optional category slug"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
               />
             </div>

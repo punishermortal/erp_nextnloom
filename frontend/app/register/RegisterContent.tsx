@@ -10,6 +10,8 @@ import { RootState, AppDispatch } from '@/store/store'
 import { register } from '@/store/slices/authSlice'
 import { toast } from 'react-toastify'
 import axios from 'axios'
+import { getErrorMessage } from '@/lib/errorHandler'
+import { debugError } from '@/lib/debugError'
 
 export default function RegisterContent() {
   const router = useRouter()
@@ -71,7 +73,7 @@ export default function RegisterContent() {
       setOtpSent((prev) => ({ ...prev, phone: displayMessage }))
       toast.success(displayMessage)
     } catch (error: any) {
-      toast.error(error?.response?.data?.error || 'Failed to send phone OTP')
+      toast.error(getErrorMessage(error) || 'Failed to send phone OTP')
     } finally {
       setOtpLoading((prev) => ({ ...prev, phone: false }))
     }
@@ -94,7 +96,7 @@ export default function RegisterContent() {
       setOtpSent((prev) => ({ ...prev, email: displayMessage }))
       toast.success(displayMessage)
     } catch (error: any) {
-      toast.error(error?.response?.data?.error || 'Failed to send email OTP')
+      toast.error(getErrorMessage(error) || 'Failed to send email OTP')
     } finally {
       setOtpLoading((prev) => ({ ...prev, email: false }))
     }
@@ -140,11 +142,10 @@ export default function RegisterContent() {
       router.push('/')
       }
     } catch (error: any) {
-      const message =
-        error?.response?.data?.detail ||
-        error?.message ||
-        'Registration failed'
-      toast.error(message)
+      const errorMessage = getErrorMessage(error)
+      debugError(error)
+      console.log('Extracted Error Message:', errorMessage)
+      toast.error(errorMessage)
     }
   }
 

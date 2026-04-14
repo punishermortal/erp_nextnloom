@@ -9,6 +9,8 @@ import { useDispatch, useSelector } from 'react-redux'
 import { RootState, AppDispatch } from '@/store/store'
 import { login } from '@/store/slices/authSlice'
 import { toast } from 'react-toastify'
+import { getErrorMessage } from '@/lib/errorHandler'
+import { debugError } from '@/lib/debugError'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -26,7 +28,10 @@ export default function LoginPage() {
       toast.success('Login successful')
       router.push('/')
     } catch (error: any) {
-      toast.error(error.response?.data?.error || error.message || 'Login failed')
+      const errorMessage = getErrorMessage(error)
+      debugError(error)
+      console.log('Extracted Error Message:', errorMessage)
+      toast.error(errorMessage)
     }
   }
 

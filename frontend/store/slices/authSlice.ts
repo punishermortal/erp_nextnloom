@@ -65,32 +65,64 @@ interface RegisterPayload {
   admin_secret?: string
 }
 
-export const login = createAsyncThunk('auth/login', async (credentials: LoginPayload) => {
-  const response = await axios.post(`${API_URL}/auth/login/`, credentials)
-  const { access, refresh, user } = response.data
-  Cookies.set('access_token', access, { expires: 1 })
-  Cookies.set('refresh_token', refresh, { expires: 7 })
-  return { user, token: access }
-})
-
-export const register = createAsyncThunk('auth/register', async (userData: RegisterPayload) => {
-    const response = await axios.post(`${API_URL}/auth/register/`, userData)
-    const { access, refresh, user } = response.data
-    Cookies.set('access_token', access, { expires: 1 })
-    Cookies.set('refresh_token', refresh, { expires: 7 })
-    return { user, token: access }
-})
-
-export const loadCurrentUser = createAsyncThunk('auth/loadCurrentUser', async () => {
-  const token = Cookies.get('access_token')
-  if (!token) {
-    throw new Error('Not authenticated')
+export const login = createAsyncThunk(
+  'auth/login',
+  async (credentials: LoginPayload, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(`${API_URL}/auth/login/`, credentials)
+      const { access, refresh, user } = response.data
+      Cookies.set('access_token', access, { expires: 1 })
+      Cookies.set('refresh_token', refresh, { expires: 7 })
+      return { user, token: access }
+    } catch (error: any) {
+      // Pass error details to component
+      if (error.response?.data) {
+        return rejectWithValue(error.response.data)
+      }
+      return rejectWithValue({ error: error.message || 'Login failed' })
+    }
   }
-  const response = await axios.get(`${API_URL}/auth/profile/`, {
-    headers: { Authorization: `Bearer ${token}` },
-  })
-  return response.data
-})
+)
+
+export const register = createAsyncThunk(
+  'auth/register',
+  async (userData: RegisterPayload, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(`${API_URL}/auth/register/`, userData)
+      const { access, refresh, user } = response.data
+      Cookies.set('access_token', access, { expires: 1 })
+      Cookies.set('refresh_token', refresh, { expires: 7 })
+      return { user, token: access }
+    } catch (error: any) {
+      // Pass error details to component
+      if (error.response?.data) {
+        return rejectWithValue(error.response.data)
+      }
+      return rejectWithValue({ error: error.message || 'Registration failed' })
+    }
+  }
+)
+
+export const loadCurrentUser = createAsyncThunk(
+  'auth/loadCurrentUser',
+  async (_, { rejectWithValue }) => {
+    try {
+      const token = Cookies.get('access_token')
+      if (!token) {
+        return rejectWithValue({ error: 'Not authenticated' })
+      }
+      const response = await axios.get(`${API_URL}/auth/profile/`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      return response.data
+    } catch (error: any) {
+      if (error.response?.data) {
+        return rejectWithValue(error.response.data)
+      }
+      return rejectWithValue({ error: error.message || 'Failed to load user' })
+    }
+  }
+)
 
 export const logout = createAsyncThunk('auth/logout', async () => {
   Cookies.remove('access_token')

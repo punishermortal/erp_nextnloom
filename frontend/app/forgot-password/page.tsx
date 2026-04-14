@@ -7,6 +7,7 @@ import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import axios from 'axios'
 import { toast } from 'react-toastify'
+import { getErrorMessage } from '@/lib/errorHandler'
 
 export default function ForgotPasswordPage() {
   const router = useRouter()
@@ -43,7 +44,7 @@ export default function ForgotPasswordPage() {
         toast.info(`OTP: ${response.data.otp} (Check console for development)`)
       }
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Failed to send OTP')
+      toast.error(getErrorMessage(error))
     } finally {
       setLoading(false)
     }
@@ -73,7 +74,7 @@ export default function ForgotPasswordPage() {
       toast.success('Password reset successfully')
       router.push('/login')
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Failed to reset password')
+      toast.error(getErrorMessage(error))
     } finally {
       setLoading(false)
     }

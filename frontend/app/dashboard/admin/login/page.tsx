@@ -7,6 +7,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { toast } from 'react-toastify'
 import { AppDispatch, RootState } from '@/store/store'
 import { login } from '@/store/slices/authSlice'
+import { getErrorMessage } from '@/lib/errorHandler'
 
 export default function AdminLoginPage() {
   const router = useRouter()
@@ -30,7 +31,7 @@ export default function AdminLoginPage() {
       toast.success('Welcome back, admin.')
       router.push('/dashboard/admin')
     } catch (error: any) {
-      toast.error(error.response?.data?.error || error.message || 'Admin login failed')
+      toast.error(getErrorMessage(error))
     }
   }
 

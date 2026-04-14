@@ -8,6 +8,7 @@ import { useSelector } from 'react-redux'
 import { RootState } from '@/store/store'
 import api from '@/lib/axios'
 import { toast } from 'react-toastify'
+import { getErrorMessage } from '@/lib/errorHandler'
 
 export default function ChangePasswordPage() {
   const router = useRouter()
@@ -43,7 +44,7 @@ export default function ChangePasswordPage() {
       toast.success('Password changed successfully')
       router.push('/profile')
     } catch (error: any) {
-      toast.error(error.response?.data?.error || error.response?.data?.old_password?.[0] || 'Failed to change password')
+      toast.error(getErrorMessage(error))
     } finally {
       setLoading(false)
     }

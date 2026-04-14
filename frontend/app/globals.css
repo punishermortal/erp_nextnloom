@@ -26,3 +26,45 @@
   }
 }
 
+/* Toast Container Styling */
+.Toastify__toast-container {
+  @apply fixed top-4 right-4 z-50 !important;
+  width: 100%;
+  max-width: 400px;
+  padding: 16px;
+}
+
+.Toastify__toast {
+  @apply rounded-lg shadow-lg font-medium;
+  min-height: 48px;
+  margin-bottom: 8px;
+}
+
+.Toastify__toast--error {
+  @apply bg-red-500 text-white;
+}
+
+.Toastify__toast--success {
+  @apply bg-green-500 text-white;
+}
+
+.Toastify__toast--info {
+  @apply bg-blue-500 text-white;
+}
+
+.Toastify__toast--warning {
+  @apply bg-yellow-500 text-white;
+}
+
+.Toastify__progress-bar {
+  @apply h-1;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 640px) {
+  .Toastify__toast-container {
+    @apply left-4 right-4 top-4;
+    max-width: none;
+  }
+}
+

@@ -11,7 +11,9 @@ import { fetchCart } from '@/store/slices/cartSlice'
 import api from '@/lib/axios'
 import { useForm } from 'react-hook-form'
 import { toast } from 'react-toastify'
-import { FiCreditCard, FiDollarSign } from 'react-icons/fi'
+import { FiCreditCard } from 'react-icons/fi'
+import { INDIAN_STATES } from '@/lib/locations'
+import { useLocationManager } from '@/hooks/useLocationManager'
 
 declare global {
   interface Window {
@@ -24,7 +26,8 @@ export default function CheckoutPage() {
   const dispatch = useDispatch()
   const { cart } = useSelector((state: RootState) => state.cart)
   const { isAuthenticated, user } = useSelector((state: RootState) => state.auth)
-  const { register, handleSubmit, formState: { errors }, watch } = useForm()
+  const { register, handleSubmit, formState: { errors }, watch, setValue } = useForm()
+  const { availableCities } = useLocationManager(watch, setValue)
   const [loading, setLoading] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState<'razorpay' | 'cod'>('cod')
   const [razorpayKey, setRazorpayKey] = useState<string>('')
@@ -58,17 +61,26 @@ export default function CheckoutPage() {
   const handleRazorpayPayment = (orderData: any) => {
     if (!razorpayLoaded || !window.Razorpay) {
       toast.error('Razorpay is not loaded. Please refresh the page and try again.')
+      setLoading(false)
       return
     }
 
     if (!razorpayKey) {
       toast.error('Razorpay key is not available. Please contact support.')
+      setLoading(false)
       return
     }
 
+    if (!orderData.razorpay_order_id) {
+      toast.error('Payment order ID not generated. Please try again.')
+      setLoading(false)
+      return
+    }
+
+    const amount = typeof orderData.amount === 'string' ? parseFloat(orderData.amount) : orderData.amount
     const options = {
       key: razorpayKey,
-      amount: Math.round(orderData.amount * 100), // Convert to paise
+      amount: Math.round(amount * 100), // Convert to paise
       currency: 'INR',
       name: 'NextBloom',
       description: `Order ${orderData.order_number}`,
@@ -76,6 +88,7 @@ export default function CheckoutPage() {
       handler: async function (response: any) {
         // Verify payment on backend
         try {
+          console.log('Payment handler called with response:', response)
           const verifyResponse = await api.post('/orders/payment/verify/', {
             order_id: orderData.id,
             razorpay_order_id: response.razorpay_order_id,
@@ -89,9 +102,10 @@ export default function CheckoutPage() {
             dispatch(fetchCart() as any)
             router.push(`/orders/${orderData.id}`)
           } else {
-            toast.error('Payment verification failed')
+            toast.error(verifyResponse.data.error || 'Payment verification failed')
           }
         } catch (error: any) {
+          console.error('Payment verification error:', error)
           toast.error(error.response?.data?.error || 'Payment verification failed')
         }
       },
@@ -114,12 +128,15 @@ export default function CheckoutPage() {
     }
 
     try {
+      console.log('Initializing Razorpay with options:', options)
       const razorpay = new window.Razorpay(options)
       razorpay.on('payment.failed', function (response: any) {
+        console.error('Payment failed:', response)
         toast.error('Payment failed: ' + (response.error?.description || 'Unknown error'))
       })
       razorpay.open()
     } catch (error: any) {
+      console.error('Failed to initialize payment:', error)
       toast.error('Failed to initialize payment: ' + (error.message || 'Unknown error'))
     }
   }
@@ -218,27 +235,41 @@ export default function CheckoutPage() {
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium mb-2">City</label>
-                      <input
-                        {...register('city', { required: 'City is required' })}
-                        type="text"
+                      <label className="block text-sm font-medium mb-2">State</label>
+                      <select
+                        {...register('state', { required: 'State is required' })}
                         className="input-field"
-                        defaultValue={user?.city || ''}
-                      />
-                      {errors.city && (
-                        <p className="text-red-500 text-sm mt-1">{errors.city.message as string}</p>
+                        defaultValue={user?.state || ''}
+                      >
+                        <option value="">Select a state</option>
+                        {INDIAN_STATES.map((state) => (
+                          <option key={state} value={state}>
+                            {state}
+                          </option>
+                        ))}
+                      </select>
+                      {errors.state && (
+                        <p className="text-red-500 text-sm mt-1">{errors.state.message as string}</p>
                       )}
                     </div>
                     <div>
-                      <label className="block text-sm font-medium mb-2">State</label>
-                      <input
-                        {...register('state', { required: 'State is required' })}
-                        type="text"
+                      <label className="block text-sm font-medium mb-2">City</label>
+                      <select
+                        {...register('city', { required: 'City is required' })}
                         className="input-field"
-                        defaultValue={user?.state || ''}
-                      />
-                      {errors.state && (
-                        <p className="text-red-500 text-sm mt-1">{errors.state.message as string}</p>
+                        defaultValue={user?.city || ''}
+                      >
+                        <option value="">
+                          {watch('state') ? 'Select a city' : 'Choose state first'}
+                        </option>
+                        {availableCities.map((city) => (
+                          <option key={city} value={city}>
+                            {city}
+                          </option>
+                        ))}
+                      </select>
+                      {errors.city && (
+                        <p className="text-red-500 text-sm mt-1">{errors.city.message as string}</p>
                       )}
                     </div>
                   </div>
@@ -292,7 +323,7 @@ export default function CheckoutPage() {
                       className="mr-4 w-5 h-5 text-primary-600"
                     />
                     <div className="flex items-center flex-1">
-                      <FiDollarSign className="w-6 h-6 text-gray-600 mr-3" />
+                      <span className="text-2xl text-gray-600 mr-3">₹</span>
                       <div>
                         <div className="font-semibold">Cash on Delivery (COD)</div>
                         <div className="text-sm text-gray-500">Pay when you receive your order</div>

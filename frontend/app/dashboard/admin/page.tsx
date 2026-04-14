@@ -135,6 +135,12 @@ export default function AdminDashboardPage() {
             Manage Products
           </Link>
           <Link
+            href="/dashboard/admin/categories"
+            className="px-5 py-3 rounded-full bg-white/20 text-white font-semibold border border-white/40 hover:bg-white/30 transition"
+          >
+            Manage Categories
+          </Link>
+          <Link
             href="/dashboard/admin/orders"
             className="px-5 py-3 rounded-full bg-white/20 text-white font-semibold border border-white/40 hover:bg-white/30 transition"
           >

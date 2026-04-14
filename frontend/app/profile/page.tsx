@@ -11,6 +11,8 @@ import { RootState } from '@/store/store'
 import { setUser } from '@/store/slices/authSlice'
 import { useForm } from 'react-hook-form'
 import { toast } from 'react-toastify'
+import { INDIAN_STATES } from '@/lib/locations'
+import { useLocationManager } from '@/hooks/useLocationManager'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'
 
@@ -66,7 +68,8 @@ export default function ProfilePage() {
   const router = useRouter()
   const dispatch = useDispatch()
   const { isAuthenticated, user } = useSelector((state: RootState) => state.auth)
-  const { register, handleSubmit, formState: { errors }, setValue } = useForm()
+  const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm()
+  const { availableCities } = useLocationManager(watch, setValue)
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
@@ -171,20 +174,34 @@ export default function ProfilePage() {
 
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2">City</label>
-                  <input
-                    {...register('city')}
-                    type="text"
+                  <label className="block text-sm font-medium mb-2">State</label>
+                  <select
+                    {...register('state')}
                     className="input-field"
-                  />
+                  >
+                    <option value="">Select a state</option>
+                    {INDIAN_STATES.map((state) => (
+                      <option key={state} value={state}>
+                        {state}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2">State</label>
-                  <input
-                    {...register('state')}
-                    type="text"
+                  <label className="block text-sm font-medium mb-2">City</label>
+                  <select
+                    {...register('city')}
                     className="input-field"
-                  />
+                  >
+                    <option value="">
+                      {watch('state') ? 'Select a city' : 'Choose state first'}
+                    </option>
+                    {availableCities.map((city) => (
+                      <option key={city} value={city}>
+                        {city}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-2">Zip Code</label>
@@ -192,6 +209,7 @@ export default function ProfilePage() {
                     {...register('zip_code')}
                     type="text"
                     className="input-field"
+                    placeholder="Enter zip code"
                   />
                 </div>
               </div>
