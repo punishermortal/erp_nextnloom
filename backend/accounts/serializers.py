@@ -52,23 +52,36 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
     def validate_phone_number(self, value):
         if not value:
-            raise serializers.ValidationError("Phone number is required")
+            raise serializers.ValidationError("Phone number is required.")
         # Normalize phone number
         phone = re.sub(r'[^\d+]', '', value)
         if not phone.startswith('+'):
             if len(phone) == 10:
                 phone = '+91' + phone
             else:
-                raise serializers.ValidationError("Invalid phone number format")
+                raise serializers.ValidationError("Invalid phone number format. Please enter a 10-digit number or with country code.")
+        
+        # Check if phone number already exists
+        if User.objects.filter(phone_number=phone).exists():
+            raise serializers.ValidationError("This phone number is already registered. Please login or use a different number.")
+        
         return phone
+
+    def validate_email(self, value):
+        if not value:
+            raise serializers.ValidationError("Email is required.")
+        # Check if email already exists
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("This email is already registered. Please login or use a different email.")
+        return value
 
     def validate(self, attrs):
         if attrs['password'] != attrs['password2']:
-            raise serializers.ValidationError({"password": "Password fields didn't match."})
+            raise serializers.ValidationError({"password": "Passwords do not match. Please enter the same password in both fields."})
 
         phone_verified = self._verify_phone(attrs['phone_number'], attrs['phone_otp'])
         if not phone_verified:
-            raise serializers.ValidationError({"phone_otp": "Phone OTP is invalid or expired."})
+            raise serializers.ValidationError({"phone_otp": "Phone OTP is invalid or expired. Please request a new OTP."})
 
         email = attrs.get('email')
         if not email:
@@ -76,14 +89,21 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
         email_verified = self._verify_email(email, attrs['email_otp'])
         if not email_verified:
-            raise serializers.ValidationError({"email_otp": "Email OTP is invalid or expired."})
+            raise serializers.ValidationError({"email_otp": "Email OTP is invalid or expired. Please request a new OTP."})
 
         role = attrs.get('role', UserRoles.CUSTOMER)
         if role == UserRoles.ADMIN:
             submitted_secret = self.initial_data.get('admin_secret')
             expected_secret = getattr(settings, 'ADMIN_REGISTRATION_CODE', '')
             if not expected_secret or submitted_secret != expected_secret:
-                raise serializers.ValidationError({"admin_secret": "Invalid or missing admin access code."})
+                raise serializers.ValidationError({"admin_secret": "Invalid admin access code. Please contact the administrator."})
+        
+        if role == UserRoles.VENDOR:
+            vendor_profile = attrs.get('vendor_profile')
+            if vendor_profile:
+                business_name = vendor_profile.get('business_name')
+                if not business_name:
+                    raise serializers.ValidationError({"vendor_profile": {"business_name": "Business name is required for vendor registration."}})
 
         return attrs
 
@@ -167,13 +187,13 @@ class ChangePasswordSerializer(serializers.Serializer):
 
     def validate(self, attrs):
         if attrs['new_password'] != attrs['new_password2']:
-            raise serializers.ValidationError({"new_password": "Password fields didn't match."})
+            raise serializers.ValidationError({"new_password": "Passwords do not match. Please enter the same password in both fields."})
         return attrs
 
     def validate_old_password(self, value):
         user = self.context['request'].user
         if not user.check_password(value):
-            raise serializers.ValidationError("Old password is incorrect")
+            raise serializers.ValidationError("The old password you entered is incorrect. Please try again.")
         return value
 
     def save(self):
@@ -188,14 +208,14 @@ class ForgotPasswordSerializer(serializers.Serializer):
 
     def validate_phone_number(self, value):
         if not value:
-            raise serializers.ValidationError("Phone number is required")
+            raise serializers.ValidationError("Phone number is required.")
         # Normalize phone number
         phone = re.sub(r'[^\d+]', '', value)
         if not phone.startswith('+'):
             if len(phone) == 10:
                 phone = '+91' + phone
             else:
-                raise serializers.ValidationError("Invalid phone number format")
+                raise serializers.ValidationError("Invalid phone number format. Please enter a 10-digit number or with country code.")
         return phone
 
 
@@ -207,18 +227,25 @@ class ResetPasswordSerializer(serializers.Serializer):
 
     def validate_phone_number(self, value):
         if not value:
-            raise serializers.ValidationError("Phone number is required")
+            raise serializers.ValidationError("Phone number is required.")
         # Normalize phone number
         phone = re.sub(r'[^\d+]', '', value)
         if not phone.startswith('+'):
             if len(phone) == 10:
                 phone = '+91' + phone
             else:
-                raise serializers.ValidationError("Invalid phone number format")
+                raise serializers.ValidationError("Invalid phone number format. Please enter a 10-digit number or with country code.")
         return phone
+
+    def validate_otp(self, value):
+        if not value:
+            raise serializers.ValidationError("OTP is required.")
+        if not value.isdigit() or len(value) != 6:
+            raise serializers.ValidationError("OTP must be a 6-digit number.")
+        return value
 
     def validate(self, attrs):
         if attrs['new_password'] != attrs['new_password2']:
-            raise serializers.ValidationError({"new_password": "Password fields didn't match."})
+            raise serializers.ValidationError({"new_password": "Passwords do not match. Please enter the same password in both fields."})
         return attrs
 

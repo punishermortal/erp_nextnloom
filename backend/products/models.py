@@ -23,6 +23,21 @@ class Category(models.Model):
     def __str__(self):
         return self.name
 
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            # Generate slug from name if not set
+            base_slug = slugify(self.name)
+            self.slug = base_slug
+
+        # Ensure slug uniqueness
+        original_slug = self.slug
+        counter = 1
+        while Category.objects.filter(slug=self.slug).exclude(pk=self.pk).exists():
+            self.slug = f"{original_slug}-{counter}"
+            counter += 1
+
+        super().save(*args, **kwargs)
+
 
 class ProductStatus(models.TextChoices):
     DRAFT = 'draft', 'Draft'

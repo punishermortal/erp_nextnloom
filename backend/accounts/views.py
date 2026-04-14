@@ -19,13 +19,13 @@ from .services import send_verification
 
 def _normalize_phone_number(raw_phone):
     if not raw_phone:
-        raise ValueError("Phone number is required")
+        raise ValueError("Phone number is required.")
     phone_number = re.sub(r'[^\d+]', '', raw_phone)
     if not phone_number.startswith('+'):
         if len(phone_number) == 10:
             phone_number = '+91' + phone_number
         else:
-            raise ValueError("Invalid phone number format")
+            raise ValueError("Invalid phone number format. Please enter a 10-digit number or with country code.")
     return phone_number
 
 
@@ -51,29 +51,55 @@ def login(request):
     password = request.data.get('password')
     requested_role = (request.data.get('role') or '').lower()
     
-    if phone_number and password:
-        try:
-            phone_number = _normalize_phone_number(phone_number)
-        except ValueError:
-            return Response({'error': 'Invalid phone number format'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Authenticate using phone_number as username (since USERNAME_FIELD is phone_number)
-        user = authenticate(username=phone_number, password=password)
-        if user:
-            if requested_role and user.role != requested_role:
+    if not phone_number:
+        return Response({'error': 'Phone number is required.'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    if not password:
+        return Response({'error': 'Password is required.'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+        phone_number = _normalize_phone_number(phone_number)
+    except ValueError as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    
+    # Check if user with this phone number exists
+    user_exists = User.objects.filter(phone_number=phone_number).exists()
+    if not user_exists:
+        return Response(
+            {'error': 'This phone number is not registered. Please sign up first.'},
+            status=status.HTTP_401_UNAUTHORIZED
+        )
+    
+    # Authenticate using phone_number as username (since USERNAME_FIELD is phone_number)
+    user = authenticate(username=phone_number, password=password)
+    if user:
+        if requested_role:
+            role_map = {
+                'customer': User.role == 'customer',
+                'vendor': user.role == 'vendor',
+                'admin': user.role == 'admin',
+            }
+            
+            if user.role != requested_role:
+                role_name = 'Customer' if requested_role == 'customer' else (
+                    'Vendor' if requested_role == 'vendor' else 'Admin'
+                )
                 return Response(
-                    {'error': 'You do not have access to this portal.'},
+                    {'error': f'Your account is registered as {user.role.capitalize()}, not {role_name}. Please select the correct portal.'},
                     status=status.HTTP_403_FORBIDDEN
                 )
 
-            refresh = RefreshToken.for_user(user)
-            return Response({
-                'user': UserSerializer(user).data,
-                'refresh': str(refresh),
-                'access': str(refresh.access_token),
-            }, status=status.HTTP_200_OK)
+        refresh = RefreshToken.for_user(user)
+        return Response({
+            'user': UserSerializer(user).data,
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+        }, status=status.HTTP_200_OK)
     
-    return Response({'error': 'Invalid phone number or password'}, status=status.HTTP_401_UNAUTHORIZED)
+    return Response(
+        {'error': 'Incorrect password. Please try again or reset your password.'},
+        status=status.HTTP_401_UNAUTHORIZED
+    )
 
 
 class UserProfileView(generics.RetrieveUpdateAPIView):
@@ -141,7 +167,7 @@ def forgot_password(request):
                 'otp': otp  # Remove this in production
             }, status=status.HTTP_200_OK)
         except User.DoesNotExist:
-            return Response({'error': 'Phone number not found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'This phone number is not registered. Please sign up first.'}, status=status.HTTP_404_NOT_FOUND)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -174,9 +200,9 @@ def reset_password(request):
             
             return Response({'message': 'Password reset successfully'}, status=status.HTTP_200_OK)
         except PasswordResetOTP.DoesNotExist:
-            return Response({'error': 'Invalid or expired OTP'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Invalid or expired OTP. Please request a new OTP to reset your password.'}, status=status.HTTP_400_BAD_REQUEST)
         except User.DoesNotExist:
-            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'User account not found. Please sign up first.'}, status=status.HTTP_404_NOT_FOUND)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 

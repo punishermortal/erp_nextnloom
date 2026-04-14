@@ -5,9 +5,14 @@ from .models import Category, Product, ProductImage, ProductStatus
 
 
 class CategorySerializer(serializers.ModelSerializer):
+    slug = serializers.SlugField(required=False, allow_blank=True)
+
     class Meta:
         model = Category
         fields = ('id', 'name', 'slug', 'description', 'image', 'is_active')
+        extra_kwargs = {
+            'slug': {'required': False, 'allow_blank': True},
+        }
 
 
 class ProductImageSerializer(serializers.ModelSerializer):
